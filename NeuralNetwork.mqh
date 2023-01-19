@@ -172,7 +172,7 @@ void NeuralNetwork::Train(matrix &Input,matrix &correct_Val){
    
     
             m_yHat= Forward_Prop(Input);
-   
+            ComputeDerivatives(Input,y_cor);
             double J = Cost(Input,y_cor);
             
             
