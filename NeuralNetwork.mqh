@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                           NeuralNetwork.mqh |
+//|                                                NeuralNetwork.mqh |
 //|                                                 William Nicholas |
 //|                                             https://www.mql5.com |
 //+------------------------------------------------------------------+
@@ -7,16 +7,16 @@
 #property link      "https://www.mql5.com"
 #include <Math\Stat\Normal.mqh>
 
-//inspired by,
-//https://github.com/stephencwelch/Neural-Networks-Demystified
-
 
 
 class NeuralNetwork{
 
 
       private:
-      
+         int m_maxiters;
+         double m_beta_1;
+         double m_beta_2;
+         bool m_verbose;
          double m_LearningRate;
          int m_deep;
          int m_depth;
@@ -34,14 +34,14 @@ class NeuralNetwork{
          matrix dJdW2;
          matrix y_cor;
          double m_alpha;
-         double m_outDim;
-         matrix Forward_Prop(matrix& Input);
+         int    m_outDim;
+         matrix Forward_Prop(matrix &Input);
          double Cost(matrix &Input , matrix &y_cor);
          double Sigmoid(double x);
          double Sigmoid_Prime(double x);     
-         void   MatrixRandom(matrix& m);
-         matrix MatrixSigmoidPrime(matrix& m);
-         matrix MatrixSigmoid(matrix& m);
+         void   MatrixRandom(matrix &m);
+         matrix MatrixSigmoidPrime(matrix &m);
+         matrix MatrixSigmoid(matrix &m);
          void   ComputeDerivatives(matrix &Input , matrix &y_);
          
       public:
@@ -49,17 +49,73 @@ class NeuralNetwork{
          matrix W_1;
          matrix W_2;
          
-         NeuralNetwork(int in_DimensionRow,int in_DimensionCol,int Number_of_Neurons,int out_Dimension,double alpha,double LearningRate);
+         NeuralNetwork(int in_DimensionRow,int in_DimensionCol,int Number_of_Neurons,int out_Dimension,double alpha,double LearningRate,bool Verbose,double beta_1, double beta_2,int max_iterations);
          void   Train(matrix& Input,matrix &correct_Val); 
          int    Sgn(double Value);
          matrix Prediction(matrix& Input); 
+         void   ResetWeights();
+         bool   WriteWeights();
+         bool   LoadWeights();
+
+
+
+
+         // A_nxm X B_mxa = X_nxa
+};
+
+
+
+bool NeuralNetwork::LoadWeights(void){
+
+      
+      
+         
+       int handle = FileOpen("Weights_1.txt",FILE_READ,",",FILE_TXT);
+       
+         
+         
+         return true;
+
+}
+bool NeuralNetwork::WriteWeights(void){
+      
+      string InpName = "Weights_1.txt";
+
+      int handle_w1=FileOpen(InpName,FILE_READ|FILE_WRITE|FILE_CSV);
+      
       
 
+      
+      InpName = "Weights_2.txt";
 
-
-
-
+      int handle_w2=FileOpen(InpName,FILE_READ|FILE_WRITE|FILE_TXT);
+      
+      
+      
+      
+      FileWrite(handle_w2,W_2 );
+      FileClose(handle_w2);
+      
+      
+      return true;
 };
+
+void NeuralNetwork::ResetWeights(void){
+
+      matrix random_W1(m_depth, m_deep);
+       matrix random_W2(m_deep, m_outDim);
+       
+       
+       
+       MatrixRandom(random_W1);
+       MatrixRandom(random_W2);
+       
+       W_1      =   random_W1;
+       W_2      = random_W2;
+
+
+}
+
 
 void NeuralNetwork::ComputeDerivatives(matrix &Input , matrix &y_){
 
@@ -94,27 +150,28 @@ void NeuralNetwork::ComputeDerivatives(matrix &Input , matrix &y_){
 };
 
 
-NeuralNetwork::NeuralNetwork(int in_DimensionRow,int in_DimensionCol,int Number_of_Neurons,int out_Dimension,double alpha,double LearningRate) {
+NeuralNetwork::NeuralNetwork(int in_DimensionRow,int in_DimensionCol,int Number_of_Neurons,int out_Dimension,double alpha,double LearningRate,bool Verbose, double beta_1, double beta_2,int max_iterations) {
        
        m_depth = in_DimensionCol;
        m_deep  = Number_of_Neurons;
        m_alpha = alpha;
        m_outDim= out_Dimension;
        m_LearningRate = LearningRate;
-       
+       m_beta_1 = beta_1;
+       m_beta_2 = beta_2;
        matrix random_W1(m_depth, m_deep);
        matrix random_W2(m_deep, out_Dimension);
        
-       
-       
+       m_verbose = Verbose;
+       m_maxiters =max_iterations;
        MatrixRandom(random_W1);
        MatrixRandom(random_W2);
        
        W_1      =   random_W1;
        W_2      = random_W2; 
-       ;   
        
-       
+       Print(W_1);
+       Print(W_2);
        
        
        
@@ -167,13 +224,13 @@ void NeuralNetwork::Train(matrix &Input,matrix &correct_Val){
       matrix mt_2(W_2.Rows(),W_2.Cols());
       mt_2.Fill(0);
     
-    
-      while( Train_condition && iterations <600){
+      double J = 0;
+      while( Train_condition && iterations <m_maxiters){
    
     
             m_yHat= Forward_Prop(Input);
             ComputeDerivatives(Input,y_cor);
-            double J = Cost(Input,y_cor);
+            J = Cost(Input,y_cor);
             
             
             
@@ -184,13 +241,13 @@ void NeuralNetwork::Train(matrix &Input,matrix &correct_Val){
        
          
        
-        double beta = .9;  
-       
-        mt_1 = beta*mt_1 +(1-beta)*(dJdW1); 
-        mt_2 = beta*mt_2 +(1-beta)*(dJdW2);
+        double beta_1 = m_beta_1;  
+        double beta_2 = m_beta_2;
+        mt_1 = beta_1*mt_1 +(1-beta_1)*(dJdW1); 
+        mt_2 = beta_1*mt_2 +(1-beta_1)*(dJdW2);
         
-        W_1 = W_1 - m_LearningRate*( beta*mt_1); 
-        W_2 = W_2 - m_LearningRate*( beta*mt_2);
+        W_1 = W_1 - m_LearningRate*( beta_2*mt_1); 
+        W_2 = W_2 - m_LearningRate*( beta_2*mt_2);
        
           
         iterations++;
@@ -198,8 +255,10 @@ void NeuralNetwork::Train(matrix &Input,matrix &correct_Val){
    }
    
             
-     
+   if( m_verbose == true){  
    Print(iterations,"<<<< iterations");
+   Print(J,"<<<< cost_value");
+   }
    
 
 
@@ -212,7 +271,8 @@ double NeuralNetwork::Cost(matrix &Input , matrix &y_){
       m_yHat = Forward_Prop(X);
       
       matrix temp = (Y -m_yHat);
-      double J = .5*pow(  temp.Sum()/(temp.Cols()*temp.Rows())    ,2 );
+      temp = temp*temp;  /// temp^2
+      double J = .5*(temp.Sum()/(temp.Cols()*temp.Rows()) ); // 
       return J; 
 }       
        
