@@ -14,35 +14,12 @@
 
 #include <NeuralNetwork.mqh>
 
-NeuralNetwork NN(1,3,5,2,.0001, 1);
+
 int OnInit()
   {
 //---
          
-         matrix X  ={{.12 ,.68, .9}};
-      
-         matrix cor  ={{1 ,0}};  
-         
-         NN.Train(X,cor);
-       
-         matrix  Y  ={{.12 ,.68, .9}};
-      
-         matrix pred = NN.Prediction(Y);
-   
-         Print("---");
-   
-         matrix X2  ={{.62 ,.18, .1}};
-      
-         matrix cor2  ={{0 ,1}};  
-         
-         NN.Train(X2,cor2);
-       
-         matrix  Y2  ={{.62 ,.18, .1}};
-      
-         matrix pred2 = NN.Prediction(Y2);
-   
-         Print(pred);
-         
+        
    
          
    
